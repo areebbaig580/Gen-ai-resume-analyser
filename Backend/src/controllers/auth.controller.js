@@ -46,47 +46,88 @@ async function registerUser(req, res) {
         });
     } catch (err) {
         console.log(err)
+        return res.status(400).json({
+            message: "Some error occured!"
+        }) 
     }
 
 };
 
 async function loginUser(req, res) {
-    const { username, password } = req.body;
+    try {
 
-    if (!username || !password) {
+        const { username, password } = req.body;
+
+        if (!username || !password) {
+            return res.status(400).json({
+                message: "Please provide username and password"
+            })
+        };
+
+        const user = await userModel.findOne({ username });
+
+        if (!user) {
+            return res.status(402).json({
+                message: "user does not exist"
+            })
+        };
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            return res.status(402).json({
+                message: "Incorrect password"
+            })
+        }
+
+        const token = await jwt.sign(
+            { id: user._id, username: user.username },
+            process.env.JWT_SECRET,
+            { expiresIn: "1d" }
+        )
+
+        res.cookie('token', token);
+
+        return res.status(201).json({
+            message: "user loggged in successfully",
+            username
+        })
+    } catch (err) {
+        console.log(err)
         return res.status(400).json({
-            message: "Please provide username and password"
-        })
-    };
-
-    const user = await userModel.findOne({ username });
-
-    if (!user) {
-        return res.status(402).json({
-            message: "user does not exist"
-        })
-    };
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-        return res.status(402).json({
-            message: "Incorrect password"
+            message: "user not found"
         })
     }
-
-    const token = await jwt.sign(
-        { id: user._id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-    )
-
-    res.cookie('token', token);
-
-    return res.status(201).json({
-        message: "user loggged in successfully",
-        username
-    })
 }
 
-module.exports = { registerUser, loginUser }
+async function getUser(req, res) {
+    try {
+        const id = req.user.id;
+
+        if (!id) {
+            return res.status(400).json({
+                message: "User not available"
+            })
+        };
+
+        const user = await userModel.findById(id);
+
+        if (!user) {
+            return res.status(400).json({
+                message: "User does not exist"
+            })
+        };
+
+        return res.status(201).json({
+            user,
+        });
+
+    } catch (err) {
+        err
+        return res.status(400).json({
+            message: "user not found"
+        })
+    }
+}
+
+module.exports = { registerUser, loginUser, getUser }
