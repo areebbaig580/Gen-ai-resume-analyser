@@ -9,7 +9,7 @@ async function registerUser(req, res) {
 
         if (!username || !email || !password) {
             return res.status(400).json({
-                message: "Please provide email username passworda"
+                message: "Please provide email username password"
             })
         };
 
@@ -19,7 +19,7 @@ async function registerUser(req, res) {
 
         if (isUserExist) {
             return res.status(400).json({
-                message: "User alredy exist"
+                message: "User already exist"
             })
         };
 
@@ -40,7 +40,7 @@ async function registerUser(req, res) {
         res.cookie('token', token);
 
         return res.status(201).json({
-            message: "User register succesfully",
+            message: "User registered succesfully",
             username,
             email
         });
@@ -48,6 +48,45 @@ async function registerUser(req, res) {
         console.log(err)
     }
 
+};
+
+async function loginUser(req, res) {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({
+            message: "Please provide username and password"
+        })
+    };
+
+    const user = await userModel.findOne({ username });
+
+    if (!user) {
+        return res.status(402).json({
+            message: "user does not exist"
+        })
+    };
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+        return res.status(402).json({
+            message: "Incorrect password"
+        })
+    }
+
+    const token = await jwt.sign(
+        { id: user._id, username: user.username },
+        process.env.JWT_SECRET,
+        { expiresIn: "1d" }
+    )
+
+    res.cookie('token', token);
+
+    return res.status(201).json({
+        message: "user loggged in successfully",
+        username
+    })
 }
 
-module.exports = { registerUser }
+module.exports = { registerUser, loginUser }
