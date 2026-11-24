@@ -3,16 +3,58 @@ import Button from '../components/Button'
 import AlternateLink from '../components/AlternateLink'
 import Hero from '../components/Hero'
 
+import { useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { useNavigate } from 'react-router'
+
 const Register = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const { handleRegister, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      await handleRegister({ username, email, password })
+
+      navigate('/');
+
+    } catch (err) {
+      console.log(err)
+    }
+  }
+  if (loading) {
+    return <main>loading...</main>
+  }
+
   return (
     <div className='h-screen w-full px-2 py-2 flex items-center justify-center gap-2 overflow-hidden bg-[#F0F8F0]'>
       <div className='h-screen w-4/10 flex flex-col items-center gap-7 px-24 py-[8vh] bg-white'>
         <Headings head={'Upgrade your resume'} text={' Create a free account to get instant, AI-powered feedback, keyword suggestions, and tailored fixes.'} />
 
-        <form className='flex flex-col gap-3 mt-7'>
-          <input type="text" placeholder='Username' className='px-6 py-2 outline-none border rounded-2xl w-[25vw]' />
-          <input type='email' placeholder='Email' className='px-6 py-2 outline-none border rounded-2xl w-[25vw]' />
-          <input type="text" placeholder='Password' className='px-6 py-2 outline-none border rounded-2xl w-[25vw]' />
+        <form className='flex flex-col gap-3 mt-7' onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder='Username'
+            onChange={(e) => setUsername(e.target.value)}
+            value={username}
+            className='px-6 py-2 outline-none border rounded-2xl w-[25vw]'
+          />
+          <input type='email'
+            placeholder='Email'
+            onChange={(e) => setEmail(e.target.value)}
+            value={email}
+            className='px-6 py-2 outline-none border rounded-2xl w-[25vw]'
+          />
+          <input type="text"
+            placeholder='Password'
+            onChange={(e) => setPassword(e.target.value)}
+            value={password}
+            className='px-6 py-2 outline-none border rounded-2xl w-[25vw]'
+          />
 
           <Button text={'Register'} />
         </form>
